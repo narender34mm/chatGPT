@@ -1,11 +1,11 @@
 package de.bsi.openai.chatgpt;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,10 +13,11 @@ import de.bsi.openai.FormInputDTO;
 import de.bsi.openai.OpenAiApiClient;
 import de.bsi.openai.OpenAiApiClient.OpenAiService;
 
-@Controller
+@RestController
+@CrossOrigin("*")
 public class ChatGptController {
 	
-	private static final String MAIN_PAGE = "index";
+	private static final String MAIN_PAGE = "";
 	
 	@Autowired private ObjectMapper jsonMapper;
 	@Autowired private OpenAiApiClient client;
@@ -26,23 +27,20 @@ public class ChatGptController {
 		var postBodyJson = jsonMapper.writeValueAsString(completion);
 		var responseBody = client.postToOpenAiApi(postBodyJson, OpenAiService.GPT_3);
 		var completionResponse = jsonMapper.readValue(responseBody, CompletionResponse.class);
+		System.out.println("com"+completionResponse);
 		return completionResponse.firstAnswer().orElseThrow();
 	}
 	
-	@GetMapping(path = "/")
-	public String index() {
-		return MAIN_PAGE;
-	}
 	
 	@PostMapping(path = "/")
-	public String chat(Model model, @ModelAttribute FormInputDTO dto) {
+	public String chat(Model model, @RequestParam String dto) throws Exception {
 		try {
-			model.addAttribute("request", dto.prompt());
-			model.addAttribute("response", chatWithGpt3(dto.prompt()));
+			model.addAttribute("request", dto);
+			model.addAttribute("response", chatWithGpt3(dto));
 		} catch (Exception e) {
 			model.addAttribute("response", "Error in communication with OpenAI ChatGPT API.");
 		}
-		return MAIN_PAGE;
+		return chatWithGpt3(dto);
 	}
 	
 }
